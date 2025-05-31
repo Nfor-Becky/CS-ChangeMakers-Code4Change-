@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import Homepage from './Pages/Homepage';
@@ -16,7 +16,6 @@ import LearnerDashboard from './Components/LearnerDashBoard';
 
 const App = () => {
   return (
-<<<<<<< HEAD
     <Router>
       <Routes>
         <Route path="/" element={<Homepage />} />
@@ -29,13 +28,7 @@ const App = () => {
     </Router>
   );
 };
-    <SignupPage/>
+    
 
 
 export default App;
-=======
-    <LearnerDashboard />
-)
-    }
-export default App
->>>>>>> ba4290b700bd6e0d1da688312d4b031764cfd389
