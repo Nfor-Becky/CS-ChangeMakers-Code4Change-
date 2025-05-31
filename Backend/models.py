@@ -3,7 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, relationship
 from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, DateTime
 from datetime import datetime
 # from werkzeug.security import 
-from typing import List
+from typing import List, Optional
 
 
 class Learner(db.Model):
@@ -15,10 +15,10 @@ class Learner(db.Model):
     email: Mapped[str] = mapped_column(String(80), nullable=True, unique=True)
     password: Mapped[str] = mapped_column(String(80), nullable=False)
     image: Mapped[str] = mapped_column(String(100), nullable=True)
-    description: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
 
     # relationship to mentor
-    mentor_id: Mapped[int] = mapped_column(Integer, ForeignKey("mentor.id"), nullable=False)
+    mentor_id: Mapped[int] = mapped_column(Integer, ForeignKey("mentor.id"), nullable=True)
     mentor: Mapped["Mentor"] = relationship("Mentor", back_populates="learner")
 
 
@@ -32,6 +32,7 @@ class Mentor(db.Model):
     profile_link: Mapped[str] = mapped_column(String(80), nullable=True, unique=True)
     role: Mapped[str]= mapped_column(String(50), nullable=True)
     rating: Mapped[int] = mapped_column(Integer)
+    is_volunteer: Mapped[bool] = mapped_column(Boolean, default=False)
     image: Mapped[str] = mapped_column(String(100))
 
     # relationship to learner

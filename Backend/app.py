@@ -12,6 +12,8 @@ def signup():
     
     check_registration = request.json.get("role")
 
+
+
     name = request.json.get('name')
     # email = request.json.get('email')
     tel = request.json.get('tel')
@@ -19,8 +21,9 @@ def signup():
     password = request.json.get('password')
 
     if check_registration == "learner":
-        
-        if name:
+        check_name = db.session.execute(db.select(Learner).where(Learner.name==name)).scalar()
+
+        if check_name:
             return jsonify(message="name already exists")
         
         learner = Learner(
@@ -42,7 +45,8 @@ def signup():
 
         return jsonify(access_token=access_token), 200
     else:
-        if name:
+        check_name = db.session.execute(db.select(Mentor).where(Mentor.name==name)).scalar()
+        if check_name:
             return jsonify(message="name already exists")
         
         mentor = Mentor(
@@ -61,10 +65,10 @@ def signup():
         db.session.commit()
         access_token = create_access_token(
             identity=name,
-            additional_claims={"role":"learner"}
+            additional_claims={"role":"mentor"}
         )
 
-        return jsonify(access_token=access_token), 200
+        return jsonify({"access_token":access_token}), 200
     
 @app.route('/login', methods=["POST"])
 def login():
@@ -72,10 +76,10 @@ def login():
     check_role = request.json.get("role")
 
     name = request.json.get("name")
-    password = request.json.get("passwowrd")
+    password = request.json.get("password")
 
     if check_role == "learner":
-        check_name = db.session.execute(db.select(Learner)).where(Learner.name==name).scalar()
+        check_name = db.session.execute(db.select(Learner).where(Learner.name==name)).scalar()
 
         if not check_name:
             return jsonify({"message": "User does not exit"}), 401
@@ -107,7 +111,7 @@ def login():
 
 
 if __name__ == "__main__":
-    # with app.app_context():
-    #     db.create_all()
+    with app.app_context():
+        db.create_all()
 
     app.run(debug=True, port=5002)
