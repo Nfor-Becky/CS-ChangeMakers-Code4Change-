@@ -2,3 +2,6 @@
 For the Code4Change Hackathon
 
 We would update the content here once we get the topic of the hack
+
+To install all the packages in the backed, navigate the the Backend folder and type in the command below
+"pip install -r requirements.txt"
