@@ -12,11 +12,11 @@ import Paymentform from './Components/Paymentform';
 import SendMoneyForm from './Components/SendMoneyForm';
 import UsersDashboard from './Components/UsersDashboard';
 import SignupPage from './Components/SignupPage';
-import { Send } from '@mui/icons-material';
-
+import LearnerDashboard from './Components/LearnerDashBoard';
 
 const App = () => {
   return (
+<<<<<<< HEAD
     <Router>
       <Routes>
         <Route path="/" element={<Homepage />} />
@@ -33,3 +33,9 @@ const App = () => {
 
 
 export default App;
+=======
+    <LearnerDashboard />
+)
+    }
+export default App
+>>>>>>> ba4290b700bd6e0d1da688312d4b031764cfd389
