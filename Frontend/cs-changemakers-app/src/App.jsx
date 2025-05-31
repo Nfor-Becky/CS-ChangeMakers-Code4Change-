@@ -7,6 +7,12 @@ import MentorsPage from './Pages/Mentor';
 import InternshipsPage from './Pages/Internship';
 import ServicesPage from './Pages/Service';
 import Job from './Pages/Job';
+import React from 'react'
+import Paymentform from './Components/Paymentform';
+import SendMoneyForm from './Components/SendMoneyForm';
+import UsersDashboard from './Components/UsersDashboard';
+import SignupPage from './Components/SignupPage';
+import { Send } from '@mui/icons-material';
 
 
 const App = () => {
@@ -23,5 +29,7 @@ const App = () => {
     </Router>
   );
 };
+    <SignupPage/>
+
 
 export default App;
