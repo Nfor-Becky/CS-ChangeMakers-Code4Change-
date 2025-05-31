@@ -90,7 +90,7 @@ def login():
         if check_name and check_password_hash(check_name.password, password):
             access_token = create_access_token(
                 identity=name,
-                additional_claims={"role":"mentor"}
+                additional_claims={"role":"mentor", "id":check_name.id}
                 )
             return jsonify(access_token=access_token), 200
     else:
@@ -105,9 +105,81 @@ def login():
         if check_name and check_password_hash(check_name.password, password):
             access_token = create_access_token(
                 identity=name,
-                additional_claims={"role":"mentor"}
+                additional_claims={"role":"mentor", "id":check_name.id}
                 )
             return jsonify(access_token=access_token), 200
+
+@app.route('/get-profile/<int:id>', methods=["GET"])
+@jwt_required()
+def view_profile(id):
+
+    user_identity = get_jwt_identity()
+
+    if user_identity.get("role") == "learner":
+        if user_identity.get("id") != id:
+            return jsonify (message="unauthorized"), 403
+        
+        learner = db.get_or_404(Learner, id)
+        if learner:
+            return jsonify({
+                "message": "Learner profile retrieved successfully",
+                "profile": learner.to_json()
+            })
+        return jsonify (message="Learner not found"), 404
+
+    elif user_identity.get("role") == 'mentor':
+        learner = Learner.query.get(id)
+        if learner:
+            return jsonify({
+                "message": "Learner profile retrieved by mentor",
+                "profile": learner.to_json()
+            }), 200
+        
+        # If not a learner, check if mentor is viewing another mentor
+        mentor = db.get_or_404(Mentor, id)
+        if mentor:
+            if id == user_identity.get("id"):
+                return jsonify({
+                    "message": "Mentor viewing own profile",
+                    "profile": mentor.to_json()
+                }), 200
+            return jsonify({"message": "Mentors can only view learner profiles or their own profile"}), 403
+        
+        return jsonify({"message": "User not found"}), 404
+    
+    return jsonify({"message": "Invalid role"}), 400
+
+@app.route('/projects', methods=['POST'])
+@jwt_required()
+def create_project():
+
+    user_identity = get_jwt()
+
+    mentor = db.get_or_404(Mentor, user_identity.get("id"))
+
+    if not mentor:
+        return jsonify(message="Mentor not found"), 404
+    
+    try:
+        project = Project(
+            title=request.json.get('title'),
+            description=request.json.get('description'),
+            mentor_id=user_identity.get("id")
+        )
+        db.session.add(project)
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Project created successfully",
+            "project": project.to_json()
+        }), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Failed to create project", "error": str(e)}), 500 
+
+
+
 
 
 if __name__ == "__main__":
