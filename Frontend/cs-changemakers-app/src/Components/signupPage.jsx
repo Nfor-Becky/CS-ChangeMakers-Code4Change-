@@ -1,258 +1,521 @@
 import React, { useState } from "react";
 import {
+  Box,
+  Card,
+  CardContent,
   TextField,
   Button,
+  Typography,
   Checkbox,
   FormControlLabel,
-  Tabs,
-  Tab,
-  Typography,
-  Box,
+  Link,
   Avatar,
   IconButton,
+  InputAdornment,
+  Alert,
+  Tab,
+  Tabs,
+  Divider,
+  createTheme,
+  ThemeProvider,
 } from "@mui/material";
-import { motion } from "framer-motion";
-import { Lock, Unlock, Upload } from "@mui/icons-material";
+import {
+  Visibility,
+  VisibilityOff,
+  PhotoCamera,
+  Person,
+  Email,
+  Phone,
+  Lock,
+} from "@mui/icons-material";
+import { Formik, Form, Field } from "formik";
+import * as Yup from "yup";
 
-function useForm(initialValues, validateOnChange = false, validate) {
-  const [values, setValues] = useState(initialValues);
-  const [errors, setErrors] = useState({});
+// Create custom theme with teal color
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: "#009688", // Teal
+      light: "#4db6ac",
+      dark: "#00695c",
+    },
+    secondary: {
+      main: "#26a69a",
+    },
+  },
+});
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const fieldValue = type === "checkbox" ? checked : value;
+const SignupPage = () => {
+  const [activeTab, setActiveTab] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
 
-    setValues({ ...values, [name]: fieldValue });
+  // Validation schemas
+  const loginSchema = Yup.object({
+    email: Yup.string()
+      .email("Invalid email format")
+      .required("Email is required"),
+    password: Yup.string()
+      .min(6, "Password must be at least 6 characters")
+      .required("Password is required"),
+  });
 
-    if (validateOnChange) validate({ [name]: fieldValue });
+  const signupSchema = Yup.object({
+    name: Yup.string().required("Name is required"),
+    phone: Yup.string()
+      .matches(/^[0-9+\-\s()]*$/, "Invalid phone number")
+      .required("Phone is required"),
+    email: Yup.string()
+      .email("Invalid email format")
+      .required("Email is required"),
+    password: Yup.string()
+      .min(6, "Password must be at least 6 characters")
+      .required("Password is required"),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref("password")], "Passwords must match")
+      .required("Please confirm your password"),
+  });
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+    setSelectedImage(null);
+    setImagePreview("");
   };
 
-  const resetForm = () => {
-    setValues(initialValues);
-    setErrors({});
-  };
-
-  return {
-    values,
-    setValues,
-    errors,
-    setErrors,
-    handleChange,
-    resetForm,
-  };
-}
-
-const AuthForm = () => {
-  const [isSignup, setIsSignup] = useState(false);
-  const [selectedTab, setSelectedTab] = useState("student");
-  const [image, setImage] = useState(null);
-
-  const initialValues = {
-    email: "",
-    password: "",
-    confirmPassword: "",
-    name: "",
-    phone: "",
-    rememberMe: false,
-  };
-
-  const validate = (fieldValues = values) => {
-    let temp = { ...errors };
-
-    if ("email" in fieldValues)
-      temp.email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fieldValues.email)
-        ? ""
-        : "Invalid email.";
-
-    if ("password" in fieldValues)
-      temp.password = fieldValues.password.length >= 6
-        ? ""
-        : "Minimum 6 characters required.";
-
-    if ("confirmPassword" in fieldValues)
-      temp.confirmPassword = fieldValues.confirmPassword === values.password
-        ? ""
-        : "Passwords do not match.";
-
-    if (isSignup) {
-      if ("name" in fieldValues)
-        temp.name = fieldValues.name ? "" : "Name is required.";
-      if ("phone" in fieldValues)
-        temp.phone = /^[0-9]{10}$/.test(fieldValues.phone)
-          ? ""
-          : "Enter a valid 10-digit phone.";
-    }
-
-    setErrors({ ...temp });
-
-    return Object.values(temp).every((x) => x === "");
-  };
-
-  const {
-    values,
-    errors,
-    handleChange,
-    resetForm,
-  } = useForm(initialValues, true, validate);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validate()) {
-      console.log("Form submitted", values);
-      resetForm();
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith("image/")) {
-      setImage(URL.createObjectURL(file));
-    }
+  const handleLogin = (values) => {
+    console.log("Login:", values);
+    alert("Login form submitted! Check console for values.");
+  };
+
+  const handleSignup = (values) => {
+    const formData = {
+      ...values,
+      image: selectedImage,
+    };
+    console.log("Signup:", formData);
+    alert("Signup form submitted! Check console for values.");
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
-      style={{
-        maxWidth: 500,
-        margin: "auto",
-        marginTop: 50,
-        padding: 24,
-        background: "#fff",
-        borderRadius: 12,
-        boxShadow: "0px 4px 20px rgba(0,0,0,0.1)",
-      }}
-    >
-      <Typography variant="h5" gutterBottom align="center">
-        {isSignup ? "Sign Up" : "Login"}
-      </Typography>
-
-      <Tabs
-        value={selectedTab}
-        onChange={(e, newValue) => setSelectedTab(newValue)}
-        centered
-        sx={{ marginBottom: 2 }}
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          width:"95vw",  
+          minHeight: "95vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%)",
+          padding: { xs: 2, sm: 3 },
+        }}
       >
-        <Tab label="Student" value="student" />
-        <Tab label="Enterprise" value="enterprise" />
-      </Tabs>
-
-      <form onSubmit={handleSubmit} noValidate>
-        {isSignup && (
-          <>
-            <TextField
-              fullWidth
-              label="Full Name"
-              name="name"
-              value={values.name}
-              onChange={handleChange}
-              error={!!errors.name}
-              helperText={errors.name}
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="Phone Number"
-              name="phone"
-              value={values.phone}
-              onChange={handleChange}
-              error={!!errors.phone}
-              helperText={errors.phone}
-              margin="normal"
-            />
-          </>
-        )}
-
-        <TextField
-          fullWidth
-          label="Email"
-          name="email"
-          type="email"
-          value={values.email}
-          onChange={handleChange}
-          error={!!errors.email}
-          helperText={errors.email}
-          margin="normal"
-        />
-
-        <TextField
-          fullWidth
-          label="Password"
-          name="password"
-          type="password"
-          value={values.password}
-          onChange={handleChange}
-          error={!!errors.password}
-          helperText={errors.password}
-          margin="normal"
-        />
-
-        {isSignup && (
-          <TextField
-            fullWidth
-            label="Confirm Password"
-            name="confirmPassword"
-            type="password"
-            value={values.confirmPassword}
-            onChange={handleChange}
-            error={!!errors.confirmPassword}
-            helperText={errors.confirmPassword}
-            margin="normal"
-          />
-        )}
-
-        {isSignup && (
-          <Box textAlign="center" mt={2}>
-            <input
-              accept="image/*"
-              style={{ display: "none" }}
-              id="upload-button"
-              type="file"
-              onChange={handleImageChange}
-            />
-            <label htmlFor="upload-button">
-              <IconButton component="span">
-                <Upload />
-              </IconButton>
-            </label>
-            {image && <Avatar src={image} sx={{ margin: "auto", width: 56, height: 56 }} />}
-          </Box>
-        )}
-
-        <FormControlLabel
-          control={
-            <Checkbox
-              name="rememberMe"
-              checked={values.rememberMe}
-              onChange={handleChange}
-            />
-          }
-          label="Remember me"
-        />
-
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            startIcon={isSignup ? <Lock /> : <Unlock />}
-            sx={{ mt: 2 }}
+        <Card
+          sx={{
+            width: "100%",
+            maxWidth: 450,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+            borderRadius: 3,
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              bgcolor: "primary.main",
+              color: "white",
+              p: 3,
+              textAlign: "center",
+            }}
           >
-            {isSignup ? "Create Account" : "Login"}
-          </Button>
-        </motion.div>
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              Welcome
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              Please sign in to your account or create a new one
+            </Typography>
+          </Box>
 
-        <Box textAlign="center" mt={2}>
-          <Button color="secondary" onClick={() => setIsSignup(!isSignup)}>
-            {isSignup ? "Already have an account? Login" : "Don't have an account? Sign up"}
-          </Button>
-        </Box>
-      </form>
-    </motion.div>
+          <CardContent sx={{ p: 0 }}>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              variant="fullWidth"
+              sx={{
+                "& .MuiTab-root": {
+                  textTransform: "none",
+                  fontSize: "1rem",
+                  fontWeight: 600,
+                  py: 2,
+                },
+              }}
+            >
+              <Tab label="Login" />
+              <Tab label="Sign Up" />
+            </Tabs>
+
+            <Box sx={{ p: 3 }}>
+              {activeTab === 0 ? (
+                // Login Form
+                <Formik
+                  initialValues={{
+                    email: "",
+                    password: "",
+                    rememberMe: false,
+                  }}
+                  validationSchema={loginSchema}
+                  onSubmit={handleLogin}
+                >
+                  {({ errors, touched, values, handleChange, handleBlur }) => (
+                    <Form>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 2.5,
+                        }}
+                      >
+                        <TextField
+                          fullWidth
+                          name="email"
+                          label="Email Address"
+                          type="email"
+                          value={values.email}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          error={touched.email && Boolean(errors.email)}
+                          helperText={touched.email && errors.email}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Email color="primary" />
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+
+                        <TextField
+                          fullWidth
+                          name="password"
+                          label="Password"
+                          type={showPassword ? "text" : "password"}
+                          value={values.password}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          error={touched.password && Boolean(errors.password)}
+                          helperText={touched.password && errors.password}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Lock color="primary" />
+                              </InputAdornment>
+                            ),
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  edge="end"
+                                >
+                                  {showPassword ? (
+                                    <VisibilityOff />
+                                  ) : (
+                                    <Visibility />
+                                  )}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                name="rememberMe"
+                                checked={values.rememberMe}
+                                onChange={handleChange}
+                                color="primary"
+                              />
+                            }
+                            label="Remember Me"
+                          />
+                          <Link
+                            href="#"
+                            color="primary"
+                            sx={{ textDecoration: "none", fontWeight: 500 }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              alert(
+                                "Forgot password functionality would be implemented here"
+                              );
+                            }}
+                          >
+                            Forgot Password?
+                          </Link>
+                        </Box>
+
+                        <Button
+                          type="submit"
+                          fullWidth
+                          variant="contained"
+                          size="large"
+                          sx={{
+                            mt: 2,
+                            py: 1.5,
+                            borderRadius: 2,
+                            textTransform: "none",
+                            fontSize: "1.1rem",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Sign In
+                        </Button>
+                      </Box>
+                    </Form>
+                  )}
+                </Formik>
+              ) : (
+                // Signup Form
+                <Formik
+                  initialValues={{
+                    name: "",
+                    phone: "",
+                    email: "",
+                    password: "",
+                    confirmPassword: "",
+                  }}
+                  validationSchema={signupSchema}
+                  onSubmit={handleSignup}
+                >
+                  {({ errors, touched, values, handleChange, handleBlur }) => (
+                    <Form>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 2.5,
+                        }}
+                      >
+                        {/* Image Upload */}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            mb: 2,
+                          }}
+                        >
+                          <Box sx={{ position: "relative" }}>
+                            <Avatar
+                              sx={{
+                                width: 80,
+                                height: 80,
+                                bgcolor: "primary.light",
+                                border: "3px solid",
+                                borderColor: "primary.main",
+                              }}
+                              src={imagePreview}
+                            >
+                              {!imagePreview && (
+                                <Person sx={{ fontSize: 40 }} />
+                              )}
+                            </Avatar>
+                            <IconButton
+                              component="label"
+                              sx={{
+                                position: "absolute",
+                                bottom: -8,
+                                right: -8,
+                                bgcolor: "primary.main",
+                                color: "white",
+                                "&:hover": { bgcolor: "primary.dark" },
+                                width: 32,
+                                height: 32,
+                              }}
+                            >
+                              <PhotoCamera sx={{ fontSize: 16 }} />
+                              <input
+                                type="file"
+                                hidden
+                                accept="image/*"
+                                onChange={handleImageChange}
+                              />
+                            </IconButton>
+                          </Box>
+                        </Box>
+
+                        <TextField
+                          fullWidth
+                          name="name"
+                          label="Full Name"
+                          value={values.name}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          error={touched.name && Boolean(errors.name)}
+                          helperText={touched.name && errors.name}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Person color="primary" />
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+
+                        <TextField
+                          fullWidth
+                          name="phone"
+                          label="Phone Number"
+                          value={values.phone}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          error={touched.phone && Boolean(errors.phone)}
+                          helperText={touched.phone && errors.phone}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Phone color="primary" />
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+
+                        <TextField
+                          fullWidth
+                          name="email"
+                          label="Email Address"
+                          type="email"
+                          value={values.email}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          error={touched.email && Boolean(errors.email)}
+                          helperText={touched.email && errors.email}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Email color="primary" />
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+
+                        <TextField
+                          fullWidth
+                          name="password"
+                          label="Password"
+                          type={showPassword ? "text" : "password"}
+                          value={values.password}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          error={touched.password && Boolean(errors.password)}
+                          helperText={touched.password && errors.password}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Lock color="primary" />
+                              </InputAdornment>
+                            ),
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  edge="end"
+                                >
+                                  {showPassword ? (
+                                    <VisibilityOff />
+                                  ) : (
+                                    <Visibility />
+                                  )}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+
+                        <TextField
+                          fullWidth
+                          name="confirmPassword"
+                          label="Confirm Password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={values.confirmPassword}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          error={
+                            touched.confirmPassword &&
+                            Boolean(errors.confirmPassword)
+                          }
+                          helperText={
+                            touched.confirmPassword && errors.confirmPassword
+                          }
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Lock color="primary" />
+                              </InputAdornment>
+                            ),
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  onClick={() =>
+                                    setShowConfirmPassword(!showConfirmPassword)
+                                  }
+                                  edge="end"
+                                >
+                                  {showConfirmPassword ? (
+                                    <VisibilityOff />
+                                  ) : (
+                                    <Visibility />
+                                  )}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+
+                        <Button
+                          type="submit"
+                          fullWidth
+                          variant="contained"
+                          size="large"
+                          sx={{
+                            mt: 2,
+                            py: 1.5,
+                            borderRadius: 2,
+                            textTransform: "none",
+                            fontSize: "1.1rem",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Create Account
+                        </Button>
+                      </Box>
+                    </Form>
+                  )}
+                </Formik>
+              )}
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    </ThemeProvider>
   );
 };
 
-export default AuthForm;
+export default SignupPage;
