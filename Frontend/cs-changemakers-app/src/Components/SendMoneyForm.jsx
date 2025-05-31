@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 
-const Paymentform = () => {
+const SendMoneyForm = () => {
   const [amount, setAmount] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [description, setDescription] = useState("");
@@ -20,7 +20,7 @@ const Paymentform = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [paymentId, setPaymentId] = useState(null); // <-- New state to store payment ID
+  const [paymentId, setPaymentId] = useState(""); // ✅ new state for payment ID
 
   const apiKey = "qnoYzuMb4JOdAxNpzo42T";
 
@@ -28,7 +28,7 @@ const Paymentform = () => {
     e.preventDefault();
     setMessage("");
     setError(false);
-    setPaymentId(null); // Clear previous payment ID on new submission
+    setPaymentId("");
 
     const cameroonPhoneRegex = /^2376\d{8}$/;
     if (!amount || isNaN(amount) || amount <= 0) {
@@ -53,13 +53,14 @@ const Paymentform = () => {
       amount: Number(amount),
       phoneNumber: phoneNumber.trim(),
       telecomOperator: operator,
-      ...(description && { description: description.trim() }), // only include if provided
+      paymentType: "disbursement",
+      ...(description && { description: description.trim() }),
     };
 
     setLoading(true);
 
     try {
-      const response = await fetch("https://api.pay.mynkwa.com/collect", {
+      const response = await fetch("https://api.pay.mynkwa.com/disburse", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -74,33 +75,29 @@ const Paymentform = () => {
       }
 
       const data = await response.json();
-
       const { id, status, amount, telecomOperator, createdAt, description: resDescription } = data;
 
-      // Save payment ID to state
-      setPaymentId(id);
+      setPaymentId(id); // ✅ Save the payment ID
 
       setMessage(
-        `✅ Payment Request Submitted!\n` +
-        `🆔 ID: ${id}\n` +
+        `✅ Money Sent Successfully!\n` +
+        `🆔 Payment ID: ${id}\n` +
         `📱 Phone: ${phoneNumber}\n` +
         `💰 Amount: ${amount} FCFA\n` +
         `📡 Operator: ${telecomOperator.toUpperCase()}\n` +
         `📝 Description: ${resDescription || "N/A"}\n` +
         `📅 Created At: ${new Date(createdAt).toLocaleString()}\n` +
-        `📊 Status: ${status.toUpperCase()}`
+        `📈 Status: ${status.toUpperCase()}`
       );
       setError(false);
 
-      // Reset form fields
       setAmount("");
       setPhoneNumber("");
       setDescription("");
       setOperator("");
-
     } catch (error) {
-      console.error("Payment error:", error);
-      setMessage(`❌ Payment error: ${error.message}`);
+      console.error("Disbursement error:", error);
+      setMessage(`❌ Disbursement error: ${error.message}`);
       setError(true);
     } finally {
       setLoading(false);
@@ -115,7 +112,7 @@ const Paymentform = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        background: "linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)",
       }}
     >
       <Box
@@ -129,8 +126,8 @@ const Paymentform = () => {
         flexDirection="column"
         alignItems="center"
       >
-        <Typography variant="h5" gutterBottom align="center" sx={{ fontWeight: "bold", color: "#1976d2" }}>
-          Make a Payment
+        <Typography variant="h5" gutterBottom align="center" sx={{ fontWeight: "bold", color: "#2e7d32" }}>
+          Send Money
         </Typography>
         <form onSubmit={handleSubmit} style={{ width: "100%" }}>
           <FormControl fullWidth sx={{ mt: 2 }}>
@@ -140,9 +137,7 @@ const Paymentform = () => {
               onChange={(e) => setAmount(e.target.value)}
               type="number"
               required
-              InputProps={{
-                style: { background: "#f0f4ff" },
-              }}
+              InputProps={{ style: { background: "#f0f4ff" } }}
             />
           </FormControl>
           <FormControl fullWidth sx={{ mt: 2 }}>
@@ -151,9 +146,7 @@ const Paymentform = () => {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               required
-              InputProps={{
-                style: { background: "#f0f4ff" },
-              }}
+              InputProps={{ style: { background: "#f0f4ff" } }}
             />
           </FormControl>
           <FormControl fullWidth sx={{ mt: 2 }}>
@@ -163,9 +156,7 @@ const Paymentform = () => {
               onChange={(e) => setDescription(e.target.value)}
               multiline
               rows={2}
-              InputProps={{
-                style: { background: "#f0f4ff" },
-              }}
+              InputProps={{ style: { background: "#f0f4ff" } }}
             />
           </FormControl>
           <FormControl fullWidth sx={{ mt: 2 }}>
@@ -186,7 +177,7 @@ const Paymentform = () => {
             <Button
               type="submit"
               variant="contained"
-              color="primary"
+              color="success"
               disabled={loading}
               fullWidth
               sx={{
@@ -194,29 +185,17 @@ const Paymentform = () => {
                 fontSize: "1.1rem",
                 py: 1.5,
                 borderRadius: 2,
-                background: "linear-gradient(90deg, #1976d2 60%, #42a5f5 100%)",
+                background: "linear-gradient(90deg, #2e7d32 60%, #66bb6a 100%)",
                 boxShadow: 3,
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : "Submit Payment"}
+              {loading ? <CircularProgress size={24} color="inherit" /> : "Send Money"}
             </Button>
           </Box>
-
           {message && (
             <Alert severity={error ? "error" : "success"} sx={{ mt: 2, whiteSpace: "pre-line", textAlign: "center" }}>
               {message}
             </Alert>
-          )}
-
-          {/* Optional: Display payment ID separately */}
-          {paymentId && (
-            <Typography
-              variant="body2"
-              color="textSecondary"
-              sx={{ mt: 1, textAlign: "center", fontWeight: "medium" }}
-            >
-              Payment ID saved: <strong>{paymentId}</strong>
-            </Typography>
           )}
         </form>
       </Box>
@@ -224,4 +203,4 @@ const Paymentform = () => {
   );
 };
 
-export default Paymentform;
+export default SendMoneyForm;
